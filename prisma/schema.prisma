@@ -1,0 +1,308 @@
+// Prisma Schema untuk Aplikasi ADMINISTRASI UJIAN SEKOLAH
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PANITIA
+  OPERATOR
+  PENGAWAS
+}
+
+enum Gender {
+  L
+  P
+}
+
+enum StudentStatus {
+  AKTIF
+  NON_AKTIF
+  MUTASI
+}
+
+enum RoomStatus {
+  AKTIF
+  TIDAK_AKTIF
+  DALAM_PERBAIKAN
+}
+
+enum ScheduleStatus {
+  TERJADWAL
+  BERLANGSUNG
+  SELESAI
+  DIBATALKAN
+}
+
+enum AttendanceStatus {
+  HADIR
+  TIDAK_HADIR
+  SAKIT
+  IZIN
+  ALPA
+}
+
+enum SupervisorAttendanceStatus {
+  HADIR
+  TIDAK_HADIR
+  PENGGANTI
+}
+
+model User {
+  id            String      @id @default(uuid())
+  username      String      @unique
+  passwordHash  String      @map("password_hash")
+  fullName      String      @map("full_name")
+  role          Role        @default(OPERATOR)
+  supervisorId  String?     @unique @map("supervisor_id")
+  supervisor    Supervisor? @relation(fields: [supervisorId], references: [id])
+  isActive      Boolean     @default(true) @map("is_active")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model SchoolSetting {
+  id                     String    @id @default(uuid())
+  schoolName             String    @map("school_name")
+  npsn                   String
+  nss                    String?
+  address                String
+  village                String?
+  district               String?
+  city                   String
+  province               String
+  postalCode             String?   @map("postal_code")
+  email                  String
+  phone                  String
+  website                String?
+  principalName          String    @map("principal_name")
+  principalNip           String    @map("principal_nip")
+  committeeHeadName      String    @map("committee_head_name")
+  committeeHeadNip       String    @map("committee_head_nip")
+  academicYear           String    @map("academic_year")
+  semester               String
+  examName               String    @map("exam_name")
+  logoUrl                String?   @map("logo_url")
+  examStartDate          DateTime? @map("exam_start_date")
+  examEndDate            DateTime? @map("exam_end_date")
+  examNumberFormat       String    @default("{seq:3}/{kelas}/{ujian}/{tahun}") @map("exam_number_format")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  @@map("school_settings")
+}
+
+model Room {
+  id            String         @id @default(uuid())
+  code          String         @unique
+  name          String
+  building      String
+  floor         Int            @default(1)
+  capacity      Int
+  computerCount Int            @default(0) @map("computer_count")
+  deskCount     Int            @default(0) @map("desk_count")
+  chairCount    Int            @default(0) @map("chair_count")
+  status        RoomStatus     @default(AKTIF)
+  description   String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  schedules     ExamSchedule[]
+
+  @@map("rooms")
+}
+
+model Class {
+  id              String               @id @default(uuid())
+  code            String               @unique
+  name            String
+  grade           Int
+  major           String
+  homeroomTeacher String?              @map("homeroom_teacher")
+  capacity        Int                  @default(36)
+  isActive        Boolean              @default(true) @map("is_active")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  students        Student[]
+  scheduleGroups  ExamScheduleGroup[]
+
+  @@map("classes")
+}
+
+model Subject {
+  id              String               @id @default(uuid())
+  code            String               @unique
+  name            String
+  group           String
+  grade           Int?
+  major           String?
+  durationMinutes Int                  @default(90) @map("duration_minutes")
+  isActive        Boolean              @default(true) @map("is_active")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  scheduleGroups  ExamScheduleGroup[]
+
+  @@map("subjects")
+}
+
+model Supervisor {
+  id                   String                 @id @default(uuid())
+  nip                  String                 @unique
+  name                 String
+  gender               Gender
+  subject              String?
+  phone                String
+  isActive             Boolean                @default(true) @map("is_active")
+  notes                String?
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime               @updatedAt @map("updated_at")
+  user                 User?
+  scheduleSupervisors  ScheduleSupervisor[]
+
+  @@map("supervisors")
+}
+
+model Student {
+  id                 String             @id @default(uuid())
+  nis                String             @unique
+  nisn               String             @unique
+  name               String
+  gender             Gender
+  birthPlace         String?            @map("birth_place")
+  birthDate          DateTime?          @map("birth_date")
+  classId            String             @map("class_id")
+  class              Class              @relation(fields: [classId], references: [id])
+  major              String
+  examNumber         String?            @unique @map("exam_number")
+  status             StudentStatus      @default(AKTIF)
+  notes              String?
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  participants       ExamParticipant[]
+  attendances        StudentAttendance[]
+
+  @@index([classId])
+  @@map("students")
+}
+
+// ARSITEKTUR UTAMA: Satu ruang dapat berisi siswa dari beberapa kelas dan setiap kelas dapat memiliki mata pelajaran berbeda
+model ExamSchedule {
+  id                  String               @id @default(uuid())
+  date                DateTime             @db.Date
+  session             Int
+  startTime           String               @map("start_time") // Format HH:mm
+  endTime             String               @map("end_time")   // Format HH:mm
+  roomId              String               @map("room_id")
+  room                Room                 @relation(fields: [roomId], references: [id])
+  status              ScheduleStatus       @default(TERJADWAL)
+  notes               String?
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  groups              ExamScheduleGroup[]
+  supervisors         ScheduleSupervisor[]
+  minutes             ExamMinute?
+
+  @@index([date, roomId])
+  @@map("exam_schedules")
+}
+
+model ExamScheduleGroup {
+  id               String              @id @default(uuid())
+  scheduleId       String              @map("schedule_id")
+  schedule         ExamSchedule        @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  classId          String              @map("class_id")
+  class            Class               @relation(fields: [classId], references: [id])
+  subjectId        String              @map("subject_id")
+  subject          Subject             @relation(fields: [subjectId], references: [id])
+  participantCount Int                 @default(0) @map("participant_count")
+  notes            String?
+  createdAt        DateTime            @default(now()) @map("created_at")
+  participants     ExamParticipant[]
+  attendances      StudentAttendance[]
+
+  @@unique([scheduleId, classId, subjectId])
+  @@map("exam_schedule_groups")
+}
+
+model ExamParticipant {
+  id              String            @id @default(uuid())
+  scheduleGroupId String            @map("schedule_group_id")
+  scheduleGroup   ExamScheduleGroup @relation(fields: [scheduleGroupId], references: [id], onDelete: Cascade)
+  studentId       String            @map("student_id")
+  student         Student           @relation(fields: [studentId], references: [id])
+  seatNumber      Int?              @map("seat_number")
+  isActive        Boolean           @default(true) @map("is_active")
+
+  @@unique([scheduleGroupId, studentId])
+  @@map("exam_participants")
+}
+
+model ScheduleSupervisor {
+  id               String                     @id @default(uuid())
+  scheduleId       String                     @map("schedule_id")
+  schedule         ExamSchedule               @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  supervisorId     String                     @map("supervisor_id")
+  supervisor       Supervisor                 @relation(fields: [supervisorId], references: [id])
+  attendanceStatus SupervisorAttendanceStatus @default(HADIR) @map("attendance_status")
+  attendanceTime   String?                    @map("attendance_time")
+  notes            String?
+
+  @@unique([scheduleId, supervisorId])
+  @@map("schedule_supervisors")
+}
+
+model StudentAttendance {
+  id              String            @id @default(uuid())
+  scheduleGroupId String            @map("schedule_group_id")
+  scheduleGroup   ExamScheduleGroup @relation(fields: [scheduleGroupId], references: [id], onDelete: Cascade)
+  studentId       String            @map("student_id")
+  student         Student           @relation(fields: [studentId], references: [id])
+  status          AttendanceStatus  @default(HADIR)
+  notes           String?
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  @@unique([scheduleGroupId, studentId])
+  @@map("student_attendance")
+}
+
+model ExamMinute {
+  id                    String       @id @default(uuid())
+  scheduleId            String       @unique @map("schedule_id")
+  schedule              ExamSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  actualStart           String?      @map("actual_start")
+  actualEnd             String?      @map("actual_end")
+  isOrderly             Boolean      @default(true) @map("is_orderly")
+  hasIssues             Boolean      @default(false) @map("has_issues")
+  issueDescription      String?      @map("issue_description")
+  supervisorNotes       String?      @map("supervisor_notes")
+  verifiedBySupervisor  Boolean      @default(false) @map("verified_by_supervisor")
+  verifiedByCommittee   Boolean      @default(false) @map("verified_by_committee")
+  verifiedByPrincipal   Boolean      @default(false) @map("verified_by_principal")
+  updatedAt             DateTime     @updatedAt @map("updated_at")
+
+  @@map("exam_minutes")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id])
+  username  String
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  details   String?  @db.Text
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([action, entity])
+  @@map("audit_logs")
+}

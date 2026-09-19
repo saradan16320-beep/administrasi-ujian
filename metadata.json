@@ -1,0 +1,7 @@
+{
+  "name": "Administrasi Ujian Sekolah",
+  "description": "Sistem Administrasi Ujian Sekolah Terintegrasi untuk Data Master, Penjadwalan Multi-Kelas & Multi-Mapel per Ruang, Validasi Bentrok, Berita Acara, Daftar Hadir, dan Laporan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
