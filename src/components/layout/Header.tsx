@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Bell,
   UserCheck,
@@ -9,9 +9,11 @@ import {
   AlertTriangle,
   RotateCcw,
   CheckCircle2,
-  Menu
+  Menu,
+  Zap
 } from 'lucide-react';
 import { SchoolSetting, User, Role } from '../../types';
+import { StorageService } from '../../lib/storage';
 
 interface HeaderProps {
   settings: SchoolSetting;
@@ -46,6 +48,14 @@ export const Header: React.FC<HeaderProps> = ({
   const openDoc = onOpenDocModal || onOpenDoc || (() => {});
   const toggleMenu = onToggleMobileSidebar || onToggleSidebar || (() => {});
   const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const [isRealtime, setIsRealtime] = useState(StorageService.isRealTimeConnected());
+
+  useEffect(() => {
+    const unsubscribe = StorageService.subscribeSyncStatus((connected) => {
+      setIsRealtime(connected);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const getRoleBadge = (role: Role) => {
     switch (role) {
@@ -94,6 +104,26 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right: Actions & User Profile */}
         <div className="flex items-center gap-2">
+          {/* Realtime Status Indicator */}
+          <div
+            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full border transition-all ${
+              isRealtime
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-slate-50 text-slate-600 border-slate-200'
+            }`}
+            title={isRealtime ? 'Tersambung Real-time ke Cloud Firebase' : 'Mode Offline / Sinkronisasi Lokal'}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isRealtime ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+              }`}
+            />
+            <span className="font-semibold text-[11px] flex items-center gap-1">
+              <Zap className="w-3 h-3 text-amber-500" />
+              {isRealtime ? 'Firebase Realtime' : 'Offline / Standby'}
+            </span>
+          </div>
+
           {/* Reset Demo Data Button */}
           <button
             onClick={onResetData}

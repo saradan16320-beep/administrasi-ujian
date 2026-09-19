@@ -1,0 +1,273 @@
+{
+  "entities": {
+    "SchoolSetting": {
+      "title": "SchoolSetting",
+      "description": "Pengaturan sekolah dan identitas pelaksanaan ujian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "npsn": { "type": "string" },
+        "address": { "type": "string" },
+        "headmaster": { "type": "string" },
+        "headmasterNip": { "type": "string" },
+        "committeeHead": { "type": "string" },
+        "committeeHeadNip": { "type": "string" },
+        "academicYear": { "type": "string" },
+        "semester": { "type": "string" },
+        "examName": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "examStartDate": { "type": "string" },
+        "examEndDate": { "type": "string" },
+        "examNumberFormat": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "examName"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Data siswa peserta ujian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nis": { "type": "string" },
+        "nisn": { "type": "string" },
+        "name": { "type": "string" },
+        "gender": { "type": "string" },
+        "birthPlace": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "classId": { "type": "string" },
+        "className": { "type": "string" },
+        "major": { "type": "string" },
+        "examNumber": { "type": "string" },
+        "status": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "nis", "name", "gender", "classId"]
+    },
+    "ClassItem": {
+      "title": "ClassItem",
+      "description": "Data kelas dan rombel",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "grade": { "type": "number" },
+        "major": { "type": "string" },
+        "homeroomTeacher": { "type": "string" },
+        "capacity": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "code", "name", "grade", "major"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "Mata pelajaran yang diujikan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "group": { "type": "string" },
+        "grade": { "type": "number" },
+        "major": { "type": "string" },
+        "durationMinutes": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "code", "name", "group", "durationMinutes"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "Ruang pelaksanaan ujian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "building": { "type": "string" },
+        "floor": { "type": "number" },
+        "capacity": { "type": "number" },
+        "computerCount": { "type": "number" },
+        "deskCount": { "type": "number" },
+        "chairCount": { "type": "number" },
+        "personInCharge": { "type": "string" },
+        "status": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "code", "name", "capacity"]
+    },
+    "Supervisor": {
+      "title": "Supervisor",
+      "description": "Pengawas ujian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nip": { "type": "string" },
+        "name": { "type": "string" },
+        "gender": { "type": "string" },
+        "subject": { "type": "string" },
+        "phone": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "gender"]
+    },
+    "ExamSchedule": {
+      "title": "ExamSchedule",
+      "description": "Jadwal pelaksanaan ujian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "date": { "type": "string" },
+        "session": { "type": "number" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "roomId": { "type": "string" },
+        "classIds": { "type": "array" },
+        "supervisors": { "type": "array" },
+        "status": { "type": "string" },
+        "participantCount": { "type": "number" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "code", "date", "startTime", "endTime", "subjectId", "roomId"]
+    },
+    "ExamMinutes": {
+      "title": "ExamMinutes",
+      "description": "Berita Acara Ujian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "scheduleId": { "type": "string" },
+        "date": { "type": "string" },
+        "actualStartTime": { "type": "string" },
+        "actualEndTime": { "type": "string" },
+        "expectedParticipants": { "type": "number" },
+        "attendedParticipants": { "type": "number" },
+        "absentParticipants": { "type": "number" },
+        "absentStudents": { "type": "array" },
+        "supervisors": { "type": "array" },
+        "notes": { "type": "string" },
+        "examSealIntact": { "type": "boolean" },
+        "supervisorSignature": { "type": "boolean" },
+        "committeeSignature": { "type": "boolean" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "scheduleId", "date"]
+    },
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Daftar kehadiran ujian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "scheduleId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "status": { "type": "string" },
+        "seatNumber": { "type": "string" },
+        "signed": { "type": "boolean" },
+        "notes": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "scheduleId", "studentId", "status"]
+    },
+    "MakeupStudent": {
+      "title": "MakeupStudent",
+      "description": "Data ujian susulan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "scheduleId": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string" },
+        "makeupDate": { "type": "string" },
+        "makeupTime": { "type": "string" },
+        "makeupRoomId": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "studentId", "subjectId", "reason", "status"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Log aktivitas sistem administrasi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "action": { "type": "string" },
+        "entity": { "type": "string" },
+        "entityId": { "type": "string" },
+        "details": { "type": "string" },
+        "userName": { "type": "string" },
+        "userRole": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "action", "entity", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/settings/{settingId}": {
+      "schema": "SchoolSetting",
+      "description": "Pengaturan sekolah dan administrasi ujian"
+    },
+    "/students/{studentId}": {
+      "schema": "Student",
+      "description": "Data siswa peserta ujian"
+    },
+    "/classes/{classId}": {
+      "schema": "ClassItem",
+      "description": "Data kelas / rombel"
+    },
+    "/subjects/{subjectId}": {
+      "schema": "Subject",
+      "description": "Data mata pelajaran ujian"
+    },
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Data ruang ujian"
+    },
+    "/supervisors/{supervisorId}": {
+      "schema": "Supervisor",
+      "description": "Data pengawas ruang ujian"
+    },
+    "/schedules/{scheduleId}": {
+      "schema": "ExamSchedule",
+      "description": "Jadwal sesi pelaksanaan ujian"
+    },
+    "/minutes/{minuteId}": {
+      "schema": "ExamMinutes",
+      "description": "Berita Acara Pelaksanaan Ujian (BAPU)"
+    },
+    "/attendances/{attendanceId}": {
+      "schema": "AttendanceRecord",
+      "description": "Daftar hadir peserta ujian"
+    },
+    "/makeups/{makeupId}": {
+      "schema": "MakeupStudent",
+      "description": "Data siswa ujian susulan"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Log aktivitas dan riwayat sistem"
+    }
+  }
+}

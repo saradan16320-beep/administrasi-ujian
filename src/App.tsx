@@ -93,10 +93,19 @@ export default function App() {
     setLogs(StorageService.getAuditLogs());
   }, []);
 
-  // Initialize data on mount
+  // Initialize data on mount and listen to real-time storage updates
   useEffect(() => {
     StorageService.initStorage();
     refreshAllData();
+
+    const handleStorageUpdate = () => {
+      refreshAllData();
+    };
+
+    window.addEventListener('storage-updated', handleStorageUpdate);
+    return () => {
+      window.removeEventListener('storage-updated', handleStorageUpdate);
+    };
   }, [refreshAllData]);
 
   // Role switch handler
