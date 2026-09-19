@@ -155,17 +155,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           roles: ['ADMIN', 'PANITIA', 'OPERATOR', 'PENGAWAS']
         },
         {
-          key: 'minutes' as NavItemKey,
-          label: '9. Berita Acara',
-          shortLabel: 'Berita Acara',
-          icon: FileCheck,
+          key: 'attendance' as NavItemKey,
+          label: '9. Daftar Hadir',
+          shortLabel: 'Presensi',
+          icon: ClipboardList,
           roles: ['ADMIN', 'PANITIA', 'OPERATOR', 'PENGAWAS']
         },
         {
-          key: 'attendance' as NavItemKey,
-          label: '10. Daftar Hadir',
-          shortLabel: 'Presensi',
-          icon: ClipboardList,
+          key: 'minutes' as NavItemKey,
+          label: '10. Berita Acara',
+          shortLabel: 'Berita Acara',
+          icon: FileCheck,
           roles: ['ADMIN', 'PANITIA', 'OPERATOR', 'PENGAWAS']
         },
         {

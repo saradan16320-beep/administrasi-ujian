@@ -25,6 +25,7 @@ import {
 } from '../../types';
 import { StorageService } from '../../lib/storage';
 import { PrintHeader } from '../common/PrintHeader';
+import { getSessionLabel, triggerA4Print } from '../../lib/sessionHelper';
 
 interface AttendanceViewProps {
   schedules: ExamSchedule[];
@@ -125,17 +126,18 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
     <div className="space-y-6">
       {/* Print View */}
       {isPrinting ? (
-        <div className="bg-white p-8 max-w-4xl mx-auto text-black font-serif text-xs">
+        <div className="print-page-a4 bg-white p-6 md:p-8 max-w-4xl mx-auto text-black font-serif text-xs shadow-md print:shadow-none print:p-0">
           <div className="flex justify-end gap-2 mb-4 no-print font-sans">
             <button
-              onClick={() => window.print()}
-              className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold"
+              onClick={() => triggerA4Print(activeTab === 'STUDENT' ? `Presensi_${activeRoom?.code || 'Ruang'}_${activeSchedule?.date || ''}` : `Daftar_Hadir_Pengawas_${activeSchedule?.date || ''}`)}
+              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
-              Cetak Dokumen (A4)
+              <Printer className="w-3.5 h-3.5" />
+              Cetak Dokumen PDF (A4)
             </button>
             <button
               onClick={() => setIsPrinting(false)}
-              className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded text-xs font-semibold"
+              className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-semibold transition-colors cursor-pointer"
             >
               Kembali
             </button>
@@ -149,13 +151,13 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                 documentSubtitle={`Tahun Pelajaran ${settings.academicYear} - Semester ${settings.semester}`}
               />
 
-              <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-4 text-xs font-serif">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-4 text-xs font-serif print-avoid-break">
                 <div>
                   <p>
                     Hari / Tanggal : <strong>{activeSchedule?.date}</strong>
                   </p>
                   <p>
-                    Waktu / Sesi : <strong>{activeSchedule?.startTime} - {activeSchedule?.endTime} WIB (Sesi {activeSchedule?.session})</strong>
+                    Waktu / Sesi : <strong>{activeSchedule?.startTime} - {activeSchedule?.endTime} WIB ({getSessionLabel(activeSchedule?.session)})</strong>
                   </p>
                 </div>
                 <div>
@@ -215,7 +217,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
               </table>
 
               {/* Signatures */}
-              <div className="mt-8 grid grid-cols-2 gap-8 text-center text-xs">
+              <div className="mt-8 grid grid-cols-2 gap-8 text-center text-xs print-avoid-break">
                 <div>
                   <p>Pengawas Ruang I,</p>
                   <div className="h-16"></div>
@@ -267,7 +269,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                             {r?.code} ({r?.name})
                           </td>
                           <td className="border border-black p-2 text-center">
-                            {sch.date} (Sesi {sch.session})
+                            {sch.date} ({getSessionLabel(sch.session)})
                           </td>
                           <td className="border border-black p-2 text-left text-gray-400">
                             {sIdx + supIdx + 1}. ....................
@@ -368,7 +370,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                       const r = roomMap.get(s.roomId);
                       return (
                         <option key={s.id} value={s.id}>
-                          {s.date} | Sesi {s.session} ({s.startTime}-{s.endTime}) | Ruang:{' '}
+                          {s.date} | {getSessionLabel(s.session)} ({s.startTime}-{s.endTime}) | Ruang:{' '}
                           {r ? r.code : s.roomId}
                         </option>
                       );
@@ -517,7 +519,7 @@ export const AttendanceView: React.FC<AttendanceViewProps> = ({
                               {r?.code} ({r?.name})
                             </td>
                             <td className="py-2.5 px-4 text-center text-slate-600">
-                              {sch.date} • Sesi {sch.session}
+                              {sch.date} • {getSessionLabel(sch.session)}
                             </td>
                             <td className="py-2.5 px-4 text-center">
                               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">

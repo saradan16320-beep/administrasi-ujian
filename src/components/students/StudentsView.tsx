@@ -22,6 +22,7 @@ import { StorageService } from '../../lib/storage';
 import { ExcelService } from '../../lib/excel';
 import { PrintHeader } from '../common/PrintHeader';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
+import { triggerA4Print } from '../../lib/sessionHelper';
 
 interface StudentsViewProps {
   students: Student[];
@@ -317,17 +318,18 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
     <div className="space-y-6">
       {/* Printable Exam Cards View */}
       {printCardsFor ? (
-        <div className="bg-white p-6 max-w-4xl mx-auto text-black">
+        <div className="print-page-a4 bg-white p-6 md:p-8 max-w-4xl mx-auto text-black shadow-md print:shadow-none print:p-0 font-sans">
           <div className="flex justify-end gap-2 mb-4 no-print">
             <button
-              onClick={() => window.print()}
-              className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold"
+              onClick={() => triggerA4Print(`Kartu_Peserta_Ujian_${printCardsFor.length}_Siswa_A4`)}
+              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
-              Cetak Kartu ({printCardsFor.length} Siswa)
+              <Printer className="w-3.5 h-3.5" />
+              Cetak Dokumen PDF (A4) ({printCardsFor.length} Siswa)
             </button>
             <button
               onClick={() => setPrintCardsFor(null)}
-              className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded text-xs font-semibold"
+              className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-semibold transition-colors cursor-pointer"
             >
               Kembali
             </button>
@@ -339,7 +341,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
               return (
                 <div
                   key={stu.id}
-                  className="border-2 border-slate-900 rounded-lg p-3.5 bg-white text-xs space-y-2 relative"
+                  className="border-2 border-slate-900 rounded-lg p-3.5 bg-white text-xs space-y-2 relative print-avoid-break"
                 >
                   <div className="text-center border-b border-black pb-2">
                     <p className="font-bold text-[11px] uppercase tracking-wide">

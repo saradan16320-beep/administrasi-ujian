@@ -28,6 +28,7 @@ import {
   StudentAttendance
 } from '../../types';
 import { NavItemKey } from '../layout/Sidebar';
+import { getSessionLabel } from '../../lib/sessionHelper';
 
 interface DashboardViewProps {
   settings: SchoolSetting;
@@ -260,8 +261,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <span className="text-xs font-bold text-slate-800">
                           {room ? `${room.code} (${room.name})` : sch.roomId}
                         </span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
-                          Sesi {sch.session}
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold">
+                          {getSessionLabel(sch.session)}
                         </span>
                       </div>
 

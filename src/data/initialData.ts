@@ -773,7 +773,7 @@ export const initialStudents: Student[] = [
 
 // ARSITEKTUR KHUSUS: SATU RUANG, SATU SESI, BISA MEMILIKI BEBERAPA KELAS DAN BEBERAPA MAPEL!
 // Ruang R-01 (Kapasitas: 30)
-// Tanggal: 2026-10-20, Sesi 1, Jam 07.30 - 09.30
+// Tanggal: 2026-10-20, Sesi 1 (Jam Ke-1), Jam 07.30 - 08.30
 // Kelompok 1: XII TKJ -> Matematika (10 peserta)
 // Kelompok 2: XII RPL -> Bahasa Indonesia (10 peserta)
 // Kelompok 3: XII DKV -> Bahasa Inggris (10 peserta)
@@ -784,10 +784,10 @@ export const initialSchedules: ExamSchedule[] = [
     date: '2026-10-20',
     session: 1,
     startTime: '07:30',
-    endTime: '09:30',
+    endTime: '08:30',
     roomId: 'room-1', // R-01
     status: 'Terjadwal',
-    notes: 'Ujian Gabungan Sesi 1 - Multi Kelas & Multi Mapel',
+    notes: 'Ujian Gabungan Sesi 1 (Jam Ke-1) - Multi Kelas & Multi Mapel',
     createdAt: '2026-09-10T08:00:00Z',
     updatedAt: '2026-09-10T08:00:00Z',
     groups: [
@@ -843,11 +843,11 @@ export const initialSchedules: ExamSchedule[] = [
     id: 'sch-02',
     date: '2026-10-20',
     session: 2,
-    startTime: '10:00',
-    endTime: '12:00',
+    startTime: '09:00',
+    endTime: '10:00',
     roomId: 'room-2', // R-02
     status: 'Terjadwal',
-    notes: 'Ujian Sesi 2',
+    notes: 'Ujian Sesi 2 (Jam Ke-2)',
     createdAt: '2026-09-10T08:00:00Z',
     updatedAt: '2026-09-10T08:00:00Z',
     groups: [
@@ -882,7 +882,7 @@ export const initialExamMinutes: ExamMinute[] = [
     id: 'min-1',
     scheduleId: 'sch-special-01',
     actualStart: '07:30',
-    actualEnd: '09:30',
+    actualEnd: '08:30',
     isOrderly: true,
     hasIssues: false,
     issueDescription: '',

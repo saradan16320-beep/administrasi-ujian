@@ -32,6 +32,7 @@ import {
 import { StorageService } from '../../lib/storage';
 import { PrintHeader } from '../common/PrintHeader';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
+import { triggerA4Print, getSessionLabel } from '../../lib/sessionHelper';
 
 interface MakeUpExamsViewProps {
   makeUpExams: MakeUpExamRecord[];
@@ -259,7 +260,7 @@ export const MakeUpExamsView: React.FC<MakeUpExamsViewProps> = ({
       'Nama Siswa': rec.studentName || '-',
       Kelas: rec.className || '-',
       'Mata Pelajaran': rec.subjectName || '-',
-      'Jadwal Utama': `${rec.originalDate} (Sesi ${rec.originalSession || '-'})`,
+      'Jadwal Utama': `${rec.originalDate} (${rec.originalSession ? getSessionLabel(rec.originalSession) : '-'})`,
       'Alasan Ketidakhadiran': rec.reason,
       'Status Susulan': rec.status === 'SUDAH_SUSULAN' ? 'Sudah Susulan' : 'Belum Susulan',
       'Tanggal Susulan': rec.makeUpDate || '-',
@@ -279,18 +280,18 @@ export const MakeUpExamsView: React.FC<MakeUpExamsViewProps> = ({
     <div className="space-y-6">
       {/* Printable View */}
       {isPrinting ? (
-        <div className="bg-white p-8 max-w-5xl mx-auto text-black font-serif text-xs">
+        <div className="print-page-a4 bg-white p-6 md:p-8 max-w-5xl mx-auto text-black font-serif text-xs shadow-md print:shadow-none print:p-0">
           <div className="flex justify-end gap-2 mb-4 no-print font-sans">
             <button
-              onClick={() => window.print()}
-              className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold flex items-center gap-1.5"
+              onClick={() => triggerA4Print('Daftar_Ujian_Susulan_A4')}
+              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
-              Cetak Dokumen (A4)
+              Cetak Dokumen PDF (A4)
             </button>
             <button
               onClick={() => setIsPrinting(false)}
-              className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded text-xs font-semibold"
+              className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-semibold transition-colors cursor-pointer"
             >
               Kembali
             </button>
@@ -358,7 +359,7 @@ export const MakeUpExamsView: React.FC<MakeUpExamsViewProps> = ({
             </table>
 
             {/* Signature block */}
-            <div className="pt-8 grid grid-cols-2 gap-8 text-center text-xs">
+            <div className="pt-8 grid grid-cols-2 gap-8 text-center text-xs print-avoid-break">
               <div>
                 <p>Mengetahui,</p>
                 <p className="font-semibold">Kepala Sekolah</p>
@@ -651,8 +652,8 @@ export const MakeUpExamsView: React.FC<MakeUpExamsViewProps> = ({
                           </td>
                           <td className="p-3 text-slate-600">
                             <div className="font-medium text-slate-800">{rec.originalDate}</div>
-                            <div className="text-[11px] text-slate-400">
-                              Sesi {rec.originalSession || '-'}
+                            <div className="text-[11px] text-slate-500 font-medium">
+                              {rec.originalSession ? getSessionLabel(rec.originalSession) : '-'}
                             </div>
                           </td>
                           <td className="p-3">

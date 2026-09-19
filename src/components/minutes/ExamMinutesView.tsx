@@ -30,6 +30,7 @@ import {
 } from '../../types';
 import { StorageService } from '../../lib/storage';
 import { PrintHeader } from '../common/PrintHeader';
+import { getSessionLabel, triggerA4Print } from '../../lib/sessionHelper';
 
 interface ExamMinutesViewProps {
   minutes: ExamMinute[];
@@ -178,6 +179,83 @@ export const ExamMinutesView: React.FC<ExamMinutesViewProps> = ({
     existingMinute?.verifiedBySupervisor || false
   );
 
+  // Supervisor Editing State
+  const [selectedSup1Id, setSelectedSup1Id] = useState<string>('');
+  const [selectedSup2Id, setSelectedSup2Id] = useState<string>('');
+  const [isEditingSupervisors, setIsEditingSupervisors] = useState<boolean>(false);
+
+  // Sync supervisors when schedule or minute changes
+  React.useEffect(() => {
+    const s1 = existingMinute?.supervisor1Id || activeSchedule?.supervisors[0]?.supervisorId || supervisors[0]?.id || '';
+    const s2 = existingMinute?.supervisor2Id || activeSchedule?.supervisors[1]?.supervisorId || '';
+    setSelectedSup1Id(s1);
+    setSelectedSup2Id(s2);
+    setIsEditingSupervisors(false);
+  }, [selectedScheduleId, existingMinute, activeSchedule, supervisors]);
+
+  // Active supervisor display objects
+  const activeSup1 = useMemo(() => {
+    if (selectedSup1Id) return supervisorMap.get(selectedSup1Id) || null;
+    if (activeSchedule?.supervisors[0]) return supervisorMap.get(activeSchedule.supervisors[0].supervisorId) || null;
+    return null;
+  }, [selectedSup1Id, activeSchedule, supervisorMap]);
+
+  const activeSup2 = useMemo(() => {
+    if (selectedSup2Id) return supervisorMap.get(selectedSup2Id) || null;
+    if (activeSchedule?.supervisors[1]) return supervisorMap.get(activeSchedule.supervisors[1].supervisorId) || null;
+    return null;
+  }, [selectedSup2Id, activeSchedule, supervisorMap]);
+
+  // Handler to update assigned supervisors for this schedule
+  const handleSaveSupervisors = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!activeSchedule) return;
+
+    const newSupervisors = [];
+    if (selectedSup1Id) {
+      newSupervisors.push({
+        id: activeSchedule.supervisors[0]?.id || `sup-assign-1-${Date.now()}`,
+        scheduleId: activeSchedule.id,
+        supervisorId: selectedSup1Id,
+        attendanceStatus: activeSchedule.supervisors[0]?.attendanceStatus || 'Hadir',
+        attendanceTime: activeSchedule.supervisors[0]?.attendanceTime || '07:15',
+        notes: activeSchedule.supervisors[0]?.notes || 'Pengawas 1'
+      });
+    }
+    if (selectedSup2Id) {
+      newSupervisors.push({
+        id: activeSchedule.supervisors[1]?.id || `sup-assign-2-${Date.now()}`,
+        scheduleId: activeSchedule.id,
+        supervisorId: selectedSup2Id,
+        attendanceStatus: activeSchedule.supervisors[1]?.attendanceStatus || 'Hadir',
+        attendanceTime: activeSchedule.supervisors[1]?.attendanceTime || '07:15',
+        notes: activeSchedule.supervisors[1]?.notes || 'Pengawas 2'
+      });
+    }
+
+    const updatedSchedule: ExamSchedule = {
+      ...activeSchedule,
+      supervisors: newSupervisors,
+      updatedAt: new Date().toISOString()
+    };
+    StorageService.saveSchedule(updatedSchedule);
+
+    if (existingMinute) {
+      const updatedMinute: ExamMinute = {
+        ...existingMinute,
+        supervisor1Id: selectedSup1Id,
+        supervisor2Id: selectedSup2Id,
+        updatedAt: new Date().toISOString()
+      };
+      StorageService.saveExamMinute(updatedMinute);
+    }
+
+    onRefresh();
+    setIsEditingSupervisors(false);
+    setSuccessMessage('Pengawas ruang bertugas berhasil diperbarui.');
+    setTimeout(() => setSuccessMessage(null), 3500);
+  };
+
   // Automatically populate from attendance recap when schedule changes or attendance updates
   React.useEffect(() => {
     if (existingMinute) {
@@ -229,42 +307,68 @@ export const ExamMinutesView: React.FC<ExamMinutesViewProps> = ({
       absentCount: Number(absentCount),
       absentStudentNumbers: absentNumbers,
       notes: notes,
-      supervisor1Id: activeSchedule.supervisors[0]?.supervisorId || '',
-      supervisor2Id: activeSchedule.supervisors[1]?.supervisorId || '',
+      supervisor1Id: selectedSup1Id || activeSchedule.supervisors[0]?.supervisorId || '',
+      supervisor2Id: selectedSup2Id || activeSchedule.supervisors[1]?.supervisorId || '',
       verifiedBySupervisor: isVerified,
       createdAt: existingMinute ? existingMinute.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
 
     StorageService.saveExamMinute(minuteObj);
+
+    // Also synchronize supervisors to schedule
+    if (selectedSup1Id || selectedSup2Id) {
+      const newSupervisors = [];
+      if (selectedSup1Id) {
+        newSupervisors.push({
+          id: activeSchedule.supervisors[0]?.id || `sup-assign-1-${Date.now()}`,
+          scheduleId: activeSchedule.id,
+          supervisorId: selectedSup1Id,
+          attendanceStatus: activeSchedule.supervisors[0]?.attendanceStatus || 'Hadir',
+          attendanceTime: activeSchedule.supervisors[0]?.attendanceTime || '07:15',
+          notes: activeSchedule.supervisors[0]?.notes || 'Pengawas 1'
+        });
+      }
+      if (selectedSup2Id) {
+        newSupervisors.push({
+          id: activeSchedule.supervisors[1]?.id || `sup-assign-2-${Date.now()}`,
+          scheduleId: activeSchedule.id,
+          supervisorId: selectedSup2Id,
+          attendanceStatus: activeSchedule.supervisors[1]?.attendanceStatus || 'Hadir',
+          attendanceTime: activeSchedule.supervisors[1]?.attendanceTime || '07:15',
+          notes: activeSchedule.supervisors[1]?.notes || 'Pengawas 2'
+        });
+      }
+      const updatedSchedule: ExamSchedule = {
+        ...activeSchedule,
+        supervisors: newSupervisors,
+        updatedAt: new Date().toISOString()
+      };
+      StorageService.saveSchedule(updatedSchedule);
+    }
+
     onRefresh();
     setIsEditing(false);
     setSuccessMessage('Berita acara ujian berhasil disimpan dan diverifikasi.');
     setTimeout(() => setSuccessMessage(null), 3500);
   };
 
-  const activeSup1 = activeSchedule?.supervisors[0]
-    ? supervisorMap.get(activeSchedule.supervisors[0].supervisorId)
-    : null;
-  const activeSup2 = activeSchedule?.supervisors[1]
-    ? supervisorMap.get(activeSchedule.supervisors[1].supervisorId)
-    : null;
-
   return (
     <div className="space-y-6">
       {/* Print View when requested */}
       {isPrinting ? (
-        <div className="bg-white p-8 max-w-4xl mx-auto text-black font-serif text-xs">
+        <div className="print-page-a4 bg-white p-6 md:p-8 max-w-4xl mx-auto text-black font-serif text-xs shadow-md print:shadow-none print:p-0">
           <div className="flex justify-end gap-2 mb-4 no-print font-sans">
             <button
-              onClick={() => window.print()}
-              className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold"
+              onClick={() => triggerA4Print(`Berita_Acara_${activeRoom?.code || 'Ruang'}_${activeSchedule?.date || ''}`)}
+              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
-              Cetak Berita Acara (A4)
+              <Printer className="w-3.5 h-3.5" />
+              Cetak Dokumen PDF (A4)
             </button>
             <button
               onClick={() => setIsPrinting(false)}
-              className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded text-xs font-semibold"
+              className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-semibold transition-colors cursor-pointer"
             >
               Kembali
             </button>
@@ -282,24 +386,24 @@ export const ExamMinutesView: React.FC<ExamMinutesViewProps> = ({
               <strong>{settings.examName}</strong> di {settings.schoolName} untuk:
             </p>
 
-            <table className="w-full text-xs">
+            <table className="w-full text-xs print-avoid-break">
               <tbody>
                 <tr>
-                  <td className="w-36 py-1">Ruang Ujian</td>
+                  <td className="w-36 py-1 font-medium">Ruang Ujian</td>
                   <td className="py-1">
                     : <strong>{activeRoom?.code} ({activeRoom?.name})</strong> - Gedung{' '}
                     {activeRoom?.building}
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-1">Sesi / Waktu</td>
+                  <td className="py-1 font-medium">Sesi / Waktu</td>
                   <td className="py-1">
-                    : Sesi {activeSchedule?.session} ({activeSchedule?.startTime} -{' '}
+                    : <strong>{getSessionLabel(activeSchedule?.session)}</strong> ({activeSchedule?.startTime} -{' '}
                     {activeSchedule?.endTime} WIB)
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-1">Status Kehadiran</td>
+                  <td className="py-1 font-medium">Status Kehadiran</td>
                   <td className="py-1">
                     : Terdaftar: <strong>{presentCount + absentCount}</strong> orang | Hadir:{' '}
                     <strong>{presentCount}</strong> orang | Tidak Hadir:{' '}
@@ -308,7 +412,7 @@ export const ExamMinutesView: React.FC<ExamMinutesViewProps> = ({
                 </tr>
                 {absentNumbers && (
                   <tr>
-                    <td className="py-1">No Peserta Tidak Hadir</td>
+                    <td className="py-1 font-medium">No Peserta Tidak Hadir</td>
                     <td className="py-1 font-mono text-rose-700">: {absentNumbers}</td>
                   </tr>
                 )}
@@ -408,7 +512,7 @@ export const ExamMinutesView: React.FC<ExamMinutesViewProps> = ({
             </p>
 
             {/* Signatures */}
-            <div className="pt-6 grid grid-cols-2 gap-8 text-center text-xs">
+            <div className="pt-6 grid grid-cols-2 gap-8 text-center text-xs print-avoid-break">
               <div>
                 <p>Pengawas Ruang I,</p>
                 <div className="h-20 flex items-center justify-center text-gray-400 italic">
@@ -448,7 +552,7 @@ export const ExamMinutesView: React.FC<ExamMinutesViewProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsPrinting(true)}
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 Cetak Berita Acara (A4)
@@ -478,7 +582,7 @@ export const ExamMinutesView: React.FC<ExamMinutesViewProps> = ({
                   const r = roomMap.get(s.roomId);
                   return (
                     <option key={s.id} value={s.id}>
-                      {s.date} | Sesi {s.session} ({s.startTime}-{s.endTime}) | Ruang:{' '}
+                      {s.date} | {getSessionLabel(s.session)} ({s.startTime}-{s.endTime}) | Ruang:{' '}
                       {r ? r.code : s.roomId}
                     </option>
                   );
@@ -637,6 +741,60 @@ export const ExamMinutesView: React.FC<ExamMinutesViewProps> = ({
                   />
                 </div>
 
+                {/* Supervisor Assignment Inside Form */}
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <UserCheck className="w-4 h-4 text-purple-600" />
+                      Pengawas Ruang yang Bertugas
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      Dapat diedit langsung untuk sesi ujian ini
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Pengawas Ruang 1 <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        value={selectedSup1Id}
+                        onChange={(e) => setSelectedSup1Id(e.target.value)}
+                        required
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-md bg-white text-xs font-medium"
+                      >
+                        <option value="">-- Pilih Pengawas 1 --</option>
+                        {supervisors.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} ({s.nip ? `NIP: ${s.nip}` : 'Non-NIP'})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Pengawas Ruang 2 (Opsional)
+                      </label>
+                      <select
+                        value={selectedSup2Id}
+                        onChange={(e) => setSelectedSup2Id(e.target.value)}
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-md bg-white text-xs font-medium"
+                      >
+                        <option value="">-- Tidak Ada Pengawas 2 (Tunggal) --</option>
+                        {supervisors
+                          .filter((s) => s.id !== selectedSup1Id)
+                          .map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name} ({s.nip ? `NIP: ${s.nip}` : 'Non-NIP'})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block font-medium text-slate-700 mb-1">
                     Catatan Kejadian Selama Ujian / Berita Acara <span className="text-rose-500">*</span>
@@ -683,44 +841,113 @@ export const ExamMinutesView: React.FC<ExamMinutesViewProps> = ({
             {/* Right 1 Col: Supervisor Assignment & Signature Preview */}
             <div className="space-y-4">
               <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <UserCheck className="w-4 h-4 text-purple-600" />
-                  Pengawas Ruang Bertugas
-                </h4>
-
-                <div className="space-y-2 text-xs">
-                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                    <span className="text-[10px] text-slate-400 font-semibold block">
-                      Pengawas 1:
-                    </span>
-                    <p className="font-bold text-slate-900">
-                      {activeSup1?.name || 'Belum ditugaskan'}
-                    </p>
-                    <p className="text-[11px] text-slate-500 font-mono">
-                      NIP: {activeSup1?.nip || '-'}
-                    </p>
-                  </div>
-
-                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                    <span className="text-[10px] text-slate-400 font-semibold block">
-                      Pengawas 2:
-                    </span>
-                    <p className="font-bold text-slate-900">
-                      {activeSup2?.name || 'Tidak ada pengawas 2 (Tunggal)'}
-                    </p>
-                    <p className="text-[11px] text-slate-500 font-mono">
-                      NIP: {activeSup2?.nip || '-'}
-                    </p>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <UserCheck className="w-4 h-4 text-purple-600" />
+                    Pengawas Ruang Bertugas
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingSupervisors(!isEditingSupervisors)}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    {isEditingSupervisors ? 'Tutup' : 'Ubah Pengawas'}
+                  </button>
                 </div>
+
+                {isEditingSupervisors ? (
+                  <div className="space-y-3 p-3 bg-purple-50/50 rounded-lg border border-purple-200">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Pengawas Ruang 1 <span className="text-rose-500">*</span>
+                      </label>
+                      <select
+                        value={selectedSup1Id}
+                        onChange={(e) => setSelectedSup1Id(e.target.value)}
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-md bg-white text-xs font-medium"
+                      >
+                        <option value="">-- Pilih Pengawas 1 --</option>
+                        {supervisors.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} ({s.nip ? `NIP: ${s.nip}` : 'Non-NIP'})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Pengawas Ruang 2 (Opsional)
+                      </label>
+                      <select
+                        value={selectedSup2Id}
+                        onChange={(e) => setSelectedSup2Id(e.target.value)}
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-md bg-white text-xs font-medium"
+                      >
+                        <option value="">-- Tidak Ada Pengawas 2 (Tunggal) --</option>
+                        {supervisors
+                          .filter((s) => s.id !== selectedSup1Id)
+                          .map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name} ({s.nip ? `NIP: ${s.nip}` : 'Non-NIP'})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingSupervisors(false)}
+                        className="px-2.5 py-1 text-slate-600 bg-white border border-slate-200 rounded text-xs hover:bg-slate-50 cursor-pointer"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveSupervisors}
+                        className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                      >
+                        Simpan Pengawas
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                      <span className="text-[10px] text-slate-400 font-semibold block">
+                        Pengawas 1:
+                      </span>
+                      <p className="font-bold text-slate-900">
+                        {activeSup1?.name || 'Belum ditugaskan'}
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-mono">
+                        NIP: {activeSup1?.nip || '-'}
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                      <span className="text-[10px] text-slate-400 font-semibold block">
+                        Pengawas 2:
+                      </span>
+                      <p className="font-bold text-slate-900">
+                        {activeSup2?.name || 'Tidak ada pengawas 2 (Tunggal)'}
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-mono">
+                        NIP: {activeSup2?.nip || '-'}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="pt-2 border-t border-slate-100">
                   <button
                     onClick={() => setIsPrinting(true)}
-                    className="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5"
+                    className="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Printer className="w-3.5 h-3.5" />
-                    Preview Cetak Dokumen
+                    Preview Cetak Dokumen (A4)
                   </button>
                 </div>
               </div>

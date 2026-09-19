@@ -29,6 +29,7 @@ import {
 } from '../../types';
 import { ExcelService } from '../../lib/excel';
 import { PrintHeader } from '../common/PrintHeader';
+import { getSessionLabel, triggerA4Print } from '../../lib/sessionHelper';
 
 interface ReportsViewProps {
   schedules: ExamSchedule[];
@@ -176,11 +177,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             Export ke Excel (.xlsx)
           </button>
           <button
-            onClick={() => window.print()}
-            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+            onClick={() => triggerA4Print(`Laporan_${activeReport}_A4`)}
+            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
-            Cetak Dokumen Terpilih (A4)
+            Cetak Dokumen PDF (A4)
           </button>
         </div>
       </div>
@@ -214,7 +215,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
       </div>
 
       {/* Printable Document Sheet Preview */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-md p-8 max-w-4xl mx-auto font-serif text-black min-h-[600px]">
+      <div className="print-page-a4 bg-white rounded-xl border border-slate-200 shadow-md p-6 md:p-8 max-w-4xl mx-auto font-serif text-black min-h-[600px] print:border-none print:shadow-none print:p-0">
         {/* REPORT A: JADWAL KESELURUHAN */}
         {activeReport === 'JADWAL_TOTAL' && (
           <div>
@@ -252,7 +253,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                         {sch.date}
                       </td>
                       <td className="border border-black p-1.5 text-center">
-                        Sesi {sch.session} ({sch.startTime}-{sch.endTime})
+                        {getSessionLabel(sch.session)} ({sch.startTime}-{sch.endTime})
                       </td>
                       <td className="border border-black p-1.5 text-center font-bold">
                         {r?.code} ({r?.name})
@@ -318,7 +319,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                             <td className="border border-black p-1 text-center">{i + 1}</td>
                             <td className="border border-black p-1 text-center">{sch.date}</td>
                             <td className="border border-black p-1 text-center">
-                              {sch.startTime} - {sch.endTime} (Sesi {sch.session})
+                              {sch.startTime} - {sch.endTime} ({getSessionLabel(sch.session)})
                             </td>
                             <td className="border border-black p-1">
                               {sch.groups
@@ -464,7 +465,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         )}
 
         {/* Signatures for Official Documents */}
-        <div className="mt-12 flex justify-between text-xs font-serif pt-6 border-t border-gray-300">
+        <div className="mt-12 flex justify-between text-xs font-serif pt-6 border-t border-gray-300 print-avoid-break">
           <div className="text-center w-56">
             <p className="invisible">Keterangan</p>
             <p className="font-semibold">Ketua Panitia Ujian,</p>

@@ -172,7 +172,7 @@ export default function App() {
   }, [currentView]);
 
   return (
-    <div className="h-screen bg-slate-100 flex flex-col antialiased text-slate-800 overflow-hidden">
+    <div className="h-screen print:h-auto bg-slate-100 print:bg-white flex flex-col antialiased text-slate-800 overflow-hidden print:overflow-visible">
       {/* Top Application Header */}
       <Header
         currentUser={currentUser}
@@ -185,7 +185,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden print:overflow-visible print:block">
         {/* Navigation Sidebar */}
         <Sidebar
           currentView={currentView}
@@ -202,9 +202,9 @@ export default function App() {
         />
 
         {/* Dynamic Content Viewport */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-5">
+        <main className="flex-1 overflow-y-auto print:overflow-visible p-4 md:p-6 lg:p-8 print:p-0 print:m-0 space-y-5 print:space-y-0">
           {/* Breadcrumbs & Quick Notification bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 no-print">
             <Breadcrumbs items={breadcrumbItems} />
 
             {/* Quick architectural badge */}

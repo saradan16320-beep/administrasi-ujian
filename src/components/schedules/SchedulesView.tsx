@@ -32,6 +32,11 @@ import {
 } from '../../types';
 import { StorageService } from '../../lib/storage';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
+import {
+  SESSION_OPTIONS,
+  getSessionLabel,
+  getDefaultTimesForSession
+} from '../../lib/sessionHelper';
 
 interface SchedulesViewProps {
   schedules: ExamSchedule[];
@@ -76,7 +81,7 @@ export const SchedulesView: React.FC<SchedulesViewProps> = ({
   const [formDate, setFormDate] = useState('2026-10-20');
   const [formSession, setFormSession] = useState(1);
   const [formStartTime, setFormStartTime] = useState('07:30');
-  const [formEndTime, setFormEndTime] = useState('09:30');
+  const [formEndTime, setFormEndTime] = useState('08:30');
   const [formRoomId, setFormRoomId] = useState(rooms[0]?.id || '');
   const [formSupervisors, setFormSupervisors] = useState<string[]>([
     supervisors[0]?.id || ''
@@ -182,7 +187,7 @@ export const SchedulesView: React.FC<SchedulesViewProps> = ({
     setFormDate(uniqueDates[0] || '2026-10-20');
     setFormSession(1);
     setFormStartTime('07:30');
-    setFormEndTime('09:30');
+    setFormEndTime('08:30');
     setFormRoomId(rooms[0]?.id || '');
     setFormSupervisors([supervisors[0]?.id || '']);
     setFormAllowCapacityOverride(false);
@@ -204,6 +209,13 @@ export const SchedulesView: React.FC<SchedulesViewProps> = ({
       }
     ]);
     setIsModalOpen(true);
+  };
+
+  const handleSessionChange = (sess: number) => {
+    setFormSession(sess);
+    const times = getDefaultTimesForSession(sess);
+    setFormStartTime(times.startTime);
+    setFormEndTime(times.endTime);
   };
 
   const openEditModal = (sch: ExamSchedule) => {
@@ -545,8 +557,8 @@ export const SchedulesView: React.FC<SchedulesViewProps> = ({
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
                         {sch.startTime} - {sch.endTime}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium text-[11px]">
-                        Sesi {sch.session}
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium text-[11px]">
+                        {getSessionLabel(sch.session)}
                       </span>
                       <span className="font-bold text-slate-900 text-xs flex items-center gap-1">
                         <DoorOpen className="w-4 h-4 text-amber-600" />
@@ -771,8 +783,8 @@ export const SchedulesView: React.FC<SchedulesViewProps> = ({
                             <span className="font-bold text-slate-800">
                               {room ? `${room.code} (${room.name})` : sch.roomId}
                             </span>
-                            <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                              Sesi {sch.session}
+                            <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">
+                              {getSessionLabel(sch.session)}
                             </span>
                           </div>
                           <span className="font-bold text-slate-700">
@@ -883,12 +895,14 @@ export const SchedulesView: React.FC<SchedulesViewProps> = ({
                     </label>
                     <select
                       value={formSession}
-                      onChange={(e) => setFormSession(Number(e.target.value))}
-                      className="w-full px-3 py-1.5 border border-slate-200 rounded-md bg-white"
+                      onChange={(e) => handleSessionChange(Number(e.target.value))}
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-md bg-white font-medium"
                     >
-                      <option value={1}>Sesi 1 (Pagi)</option>
-                      <option value={2}>Sesi 2 (Siang)</option>
-                      <option value={3}>Sesi 3 (Sore)</option>
+                      {SESSION_OPTIONS.map((opt) => (
+                        <option key={opt.session} value={opt.session}>
+                          {opt.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -1208,8 +1222,7 @@ export const SchedulesView: React.FC<SchedulesViewProps> = ({
                 <div>
                   <span className="text-slate-400 block text-[11px]">Waktu / Sesi:</span>
                   <span className="font-bold text-slate-800">
-                    {detailSchedule.startTime} - {detailSchedule.endTime} (Sesi{' '}
-                    {detailSchedule.session})
+                    {detailSchedule.startTime} - {detailSchedule.endTime} ({getSessionLabel(detailSchedule.session)})
                   </span>
                 </div>
                 <div>
